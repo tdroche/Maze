@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clickable="true"
+    android:contentDescription="@string/amaze_description"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="edu.wm.cs.cs301.thomasroche.ui.AmazeActivity" >
+
+    <TextView
+        android:id="@+id/mazeDisplay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="73dp"
+        android:text="@string/amaze_maze"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="#F00"
+        android:textSize="60sp" />
+
+    <SeekBar
+        android:id="@+id/skillLevel"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/copyright"
+        android:layout_centerVertical="true"
+        android:indeterminate="false"
+        android:max="14"
+        android:paddingTop="@dimen/activity_vertical_margin" />
+
+    <Spinner
+        android:id="@+id/algorithm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/fiveMarker"
+        android:layout_centerHorizontal="true"
+        android:layout_centerInParent="false"
+        android:focusable="true"
+        android:gravity="center_vertical|start"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:spinnerMode="dropdown" />
+
+    <TextView
+        android:id="@+id/copyright"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/mazeDisplay"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:text="@string/amaze_copyright"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textColor="#00F"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/zeroMarker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/skillLevel"
+        android:layout_alignStart="@+id/skillLevel"
+        android:layout_below="@+id/skillLevel"
+        android:text="@string/amaze_zeroMarker"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
+
+    <TextView
+        android:id="@+id/fifteenMarker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/tenMarker"
+        android:layout_alignBottom="@+id/tenMarker"
+        android:layout_alignRight="@+id/skillLevel"
+        android:layout_alignEnd="@+id/skillLevel"
+        android:text="@string/amaze_fifteenMarker"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
+
+    <TextView
+        android:id="@+id/fiveMarker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/zeroMarker"
+        android:layout_alignBottom="@+id/zeroMarker"
+        android:layout_alignLeft="@+id/mazeDisplay"
+        android:layout_alignStart="@+id/mazeDisplay"
+        android:layout_marginLeft="23dp"
+        android:layout_marginStart="23dp"
+        android:text="@string/amaze_fiveMarker"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
+
+    <TextView
+        android:id="@+id/tenMarker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/fiveMarker"
+        android:layout_alignBottom="@+id/fiveMarker"
+        android:layout_alignRight="@+id/mazeDisplay"
+        android:layout_alignEnd="@+id/mazeDisplay"
+        android:layout_marginRight="14dp"
+        android:layout_marginEnd="14dp"
+        android:text="@string/amaze_tenMarker"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
+
+    <RadioGroup
+        android:id="@+id/radioMaze"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:paddingTop="@dimen/activity_vertical_margin" >
+
+        <RadioButton
+            android:id="@+id/generateMaze"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:onClick="onRadioButtonClicked"
+            android:text="@string/amaze_generateMaze" />
+
+        <RadioButton
+            android:id="@+id/loadMaze"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:onClick="onRadioButtonClicked"
+            android:text="@string/amaze_loadMaze" />
+
+    </RadioGroup>
+
+</RelativeLayout>

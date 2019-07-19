@@ -1,0 +1,195 @@
+package edu.wm.cs.cs301.thomasroche.falstad;
+
+import java.io.Serializable;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Paint.FontMetrics;
+import android.graphics.Path;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.util.AttributeSet;
+import android.view.View;
+import edu.wm.cs.cs301.thomasroche.ui.PlayActivity;
+
+/**
+ * Graphics wrapper class that extends MazePanel.
+ * @author troche
+ */
+
+public class GraphicsWrapper extends View implements Serializable {
+	private static final long serialVersionUID = 9030673156608789149L;
+
+	/**
+	 * Panel operates a double buffer see http://www.codeproject.com/Articles/2136/Double-buffer-in-standard-Java-AWT for details.
+	 */
+
+	private Maze maze;
+	private Canvas canvas;
+	private Bitmap bitmap;
+	private Paint paint;
+	private Rect source;
+	private Rect destination;
+
+	/**
+	 * @param maze
+	 */
+	public GraphicsWrapper(Context context, AttributeSet attributeSet) {
+		super(context, attributeSet);
+
+		// Initialize the graphics.
+
+		paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+		setDrawingCacheEnabled(true);
+		buildDrawingCache();
+		setFocusable(false);
+	}
+
+	public void setDisplay() {
+		int layoutHeight = (getLayoutParams().height <= 0) ? 600 : getLayoutParams().height,
+			layoutWidth = (getLayoutParams().width <= 0) ? 600 : getLayoutParams().width;
+
+		source = new Rect(0, 0, 600, 600);
+		destination = new Rect(0, 0, 600, 600);
+
+		// Could also use maze width and height for bitmap size.
+
+		bitmap = Bitmap.createBitmap(layoutWidth, layoutHeight, Config.ARGB_8888);
+		canvas = new Canvas(bitmap);
+	}
+
+	GraphicsWrapper getGraphicsWrapper() {
+		return this;
+	}
+
+	@Override
+	public void onDraw(Canvas canvas) {
+		canvas.drawBitmap(bitmap, source, destination, paint);
+	}
+
+	public void setGraphicsColor(Seg seg) {
+		paint.setColor(Color.rgb(seg.getCol()[0], seg.getCol()[1], seg.getCol()[2]));
+	}
+
+	public void setWhite() {
+		paint.setColor(Color.WHITE);
+	}
+
+	public void setGray() {
+		paint.setColor(Color.GRAY);
+	}
+
+	public void setYellow() {
+		paint.setColor(Color.YELLOW);
+	}
+
+	// public void setOrange() {
+	public void setGreen() {
+		paint.setColor(Color.GREEN);
+	}
+
+	public void setRed() {
+		paint.setColor(Color.RED);
+	}
+
+	public void setBlack() {
+		paint.setColor(Color.BLACK);
+	}
+
+	public void setBlue() {
+		paint.setColor(Color.BLUE);
+	}
+
+	public void setDarkGray() {
+		paint.setColor(Color.DKGRAY);
+	}
+
+	public void drawLine(int x1, int y1, int x2, int y2) {
+		canvas.drawLine(x1, y1, x2, y2, paint);
+	}
+
+	public void fillOval(int x, int y, int width, int height) {
+		paint.setStyle(Paint.Style.FILL);
+		// canvas.drawOval(new RectF(x - width, y - height, x + width, y + height), paint);
+	}
+
+	public void fillRect(int x, int y, int width, int height) {
+		paint.setStyle(Paint.Style.FILL);
+		canvas.drawRect(x, y, x + width, y + height, paint);
+	}
+
+	public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
+		paint.setStyle(Paint.Style.FILL);
+
+		Path path = new Path();
+
+		path.reset();
+		path.moveTo(xPoints[0], yPoints[0]);
+
+		for (int i = 1 ; i < nPoints ; i++)
+			path.lineTo(xPoints[i], yPoints[i]);
+
+		path.close();
+		canvas.drawPath(path, paint);
+	}
+
+	public void drawString(String s, int y) {
+		// TODO: canvas.drawString(s, (Constants.VIEW_WIDTH - paint.getFontMetrics().stringWidth(s)) / 2, y);
+    }
+
+	public void setFontSize(int size) {
+		// TODO: canvas.setFont(new Font("TimesRoman", Font.BOLD, size));
+    }
+
+	public FontMetrics getFontMetrics() {
+		return paint.getFontMetrics();
+	}
+
+	/**
+	 * Method to return the RGB configuration for replacing Color import in Seg.java.
+	 * @param RGB color
+	 * @return RGB configuration for that color
+	 */
+
+	public static int getRGB(int[] rgb) {
+		return Color.rgb(rgb[0], rgb[1], rgb[2]);
+	}
+
+	/**
+	 * Method to help return the RGB configuration for replacing Color import in Seg.java and
+	 * other classes.
+	 * @param RGB color
+	 * @return RGB color array needed
+	 */
+
+	public static int[] returnColorArray(int color) {
+		int[] colorArray = new int[3];
+
+		colorArray[0] = Color.red(color);
+		colorArray[1] = Color.green(color);
+		colorArray[2] = Color.blue(color);
+
+		return colorArray;
+	}
+
+//	public void redrawPlayActivity(Canvas canvas) {
+//		//maze.getFirstPersonDrawer().redraw(this, maze.getPx(), maze.getPy(), maze.getViewDx(), maze.getViewDy(), maze.getWalkStep(),
+//		//								Constants.VIEW_OFFSET, maze.getRangeSet(), maze.getAngle());
+//
+//		if (maze.isInMapMode()) {
+//			maze.getMapDrawer().draw_map(this, maze.getPx(), maze.getPy(), maze.getWalkStep(), maze.getViewDx(), maze.getViewDy(),
+//										maze.isInShowMazeMode(), maze.isInShowSolutionMode());
+//			maze.getMapDrawer().draw_currentlocation(this, maze.getViewDx(), maze.getViewDy());
+//		}
+//	}
+
+	@Override
+	public void onMeasure(int measuredWidth, int measuredHeight) {
+		setMeasuredDimension(measuredWidth, measuredHeight);
+	}
+}

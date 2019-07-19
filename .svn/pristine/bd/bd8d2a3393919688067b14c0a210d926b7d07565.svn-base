@@ -1,0 +1,345 @@
+package edu.wm.cs.cs301.thomasroche.ui;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Handler;
+import android.support.v4.app.NavUtils;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.RadioButton;
+import android.widget.Toast;
+import edu.wm.cs.cs301.thomasroche.R;
+import edu.wm.cs.cs301.thomasroche.falstad.BasicRobot;
+import edu.wm.cs.cs301.thomasroche.falstad.CuriousMouse;
+import edu.wm.cs.cs301.thomasroche.falstad.GraphicsWrapper;
+import edu.wm.cs.cs301.thomasroche.falstad.HitObstacleException;
+import edu.wm.cs.cs301.thomasroche.falstad.ManualDriver;
+import edu.wm.cs.cs301.thomasroche.falstad.Maze;
+import edu.wm.cs.cs301.thomasroche.falstad.RobotDriver;
+import edu.wm.cs.cs301.thomasroche.falstad.StateHolder;
+import edu.wm.cs.cs301.thomasroche.falstad.WallFollower;
+import edu.wm.cs.cs301.thomasroche.falstad.Wizard;
+
+/**
+ * Class that deals with the play state within the maze application.
+ * Created by troche on 11/10/2015.
+ */
+
+@SuppressWarnings("unused")
+public class PlayActivity extends Activity {
+	public static ProgressBar energyProgress;
+	private Maze maze;
+	private GraphicsWrapper wrapper;
+	private Handler handler = new Handler(); // To control robot
+
+	private String driverSelection;
+	private String showTop;
+	private String showWalls;
+	private String showExit;
+
+	// public static Runnable mUpdateView;
+
+	public RobotDriver robotDriver;
+	public BasicRobot robot;
+	private int battery = 2500;
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_play);
+
+		// Initialize battery display.
+
+		energyProgress = (ProgressBar) findViewById(R.id.energyProgress);
+		energyProgress.setProgress(battery);
+
+		// Get intent extras.
+
+		maze = (Maze) getIntent().getExtras().get("maze");
+		// wrapper = new GraphicsWrapper(this, maze);
+		// maze.setGraphicsWrapper(wrapper);
+
+		// setContentView(wrapper);
+		// context = getApplicationContext();
+
+		driverSelection = getIntent().getStringExtra("driverSelection");
+		showTop = getIntent().getStringExtra("showTop");
+		showWalls = getIntent().getStringExtra("showWalls");
+		showExit = getIntent().getStringExtra("showExit");
+
+		//TODO: set the values in maze (are these really needed here?)
+		maze.setShowMaze(new Boolean(showTop).booleanValue());
+		maze.setShowSolution(new Boolean(showWalls).booleanValue());
+		maze.setSolving(new Boolean(showExit).booleanValue());
+
+		// get the maze and make it viewable. 
+		//Bundle bundle = getIntent().getExtras();
+		//BSPNode root = (BSPNode) bundle.getSerializable("BSPnode");
+		//Cells cells = (Cells) bundle.getSerializable("Cells");
+		//Distance dists = (Distance) bundle.getSerializable("Distance");
+		//int startx = bundle.getInt("startx");
+		//int starty = bundle.getInt("starty");
+		//int mazew = bundle.getInt("mazew");
+		//int mazeh = bundle.getInt("mazeh");
+		//String robotName = bundle.getString("robotDriver");
+
+		//maze = new Maze(0); //maze has been generated so method doesnt matter
+		//maze.mazew = mazew;
+		//maze.mazeh = mazeh;
+
+		//maze.newMaze(root, cells, dists, startx, starty);
+
+		// create the view
+
+		StateHolder.wrapper = (GraphicsWrapper) findViewById(R.id.mazeDisplay);
+		StateHolder.wrapper.setDisplay();
+
+		// draw the view
+
+		maze.setGraphicsWrapper(StateHolder.wrapper);
+		// TODO: may need to make this method in Maze (??)
+		// maze.makeViews(StateHolder.wrapper);
+		maze.notifyViewerRedraw();
+
+		if (driverSelection.equals("Manual")) {
+			robot = new BasicRobot(maze);
+			robotDriver = new ManualDriver();
+		}
+		else if (driverSelection.equals("Curious Mouse")) {
+			robot = new BasicRobot(maze, true, true, false, false);
+			robotDriver = new CuriousMouse();
+		}
+		else if (driverSelection.equals("Wall Follower")) {
+			robot = new BasicRobot(maze, true, true, false, false);
+			robotDriver = new WallFollower();
+		}
+		else if (driverSelection.equals("Wizard")) {
+			robot = new BasicRobot(maze);
+			robotDriver = new Wizard(maze.getMazedists());
+		}
+
+		try {
+			robotDriver.setRobot(robot);
+		}
+		catch (UnsupportedOperationException uoe) {
+			uoe.printStackTrace();
+		}
+
+		new RobotTask().execute();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+
+		getMenuInflater().inflate(R.menu.play, menu);
+		getActionBar().setHomeButtonEnabled(true);
+		getActionBar().setDisplayHomeAsUpEnabled(true);
+		return true;
+	}
+
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (item.getItemId() == android.R.id.home) {
+			Log.v(getClass().getName(), "Home button clicked - starting over");
+			NavUtils.navigateUpTo(this, new Intent(this, AmazeActivity.class));
+			return true;
+		}
+		else if (item.getItemId() == R.id.action_back) {
+			Log.v(getClass().getName(), "ActionBar back clicked - return to previous state");
+			startActivity(new Intent(this, GeneratingActivity.class));
+			return true;
+		}
+		else
+			return super.onOptionsItemSelected(item);
+	}
+
+	public void onRadioButtonClicked(View view) {
+		switch (view.getId()) {
+
+		case R.id.map:
+
+			if (((RadioButton) view).isChecked()) {
+				Log.v(getClass().getName(), "Show walls button checked");
+
+				maze.setMapMode(!maze.isInMapMode());
+				maze.notifyViewerRedraw() ;
+				StateHolder.wrapper.postInvalidate();
+			}
+
+			break;
+
+		case R.id.solution:
+
+			if (((RadioButton) view).isChecked()) {
+				Log.v(getClass().getName(), "Show walls button checked");
+
+				if (maze.isInMapMode()) {
+					maze.setShowSolution(!maze.isInShowSolutionMode()); 		
+					maze.notifyViewerRedraw() ;
+					StateHolder.wrapper.postInvalidate();
+				}
+			}
+
+			break;
+
+		case R.id.walls:
+
+			if (((RadioButton) view).isChecked())
+				Log.v(getClass().getName(), "Show walls button checked");
+
+			break;
+		}
+	}
+
+	public void onDirectionButtonClicked(View view) {
+		switch(view.getId()) {
+
+		case R.id.moveLeft:
+
+			Log.v(getClass().getName(), "Moving robot LEFT");
+
+			try {
+				if (maze.getRobotDriver().drive2Exit()) {
+					startActivity(new Intent(this, FinishActivity.class));
+					break;
+				}
+			}
+			catch (Exception e) {
+				Log.v(getClass().getName(), "<need error message for robot died/ran out of energy/obstacle>");
+				Toast.makeText(this, "Robot hit an obstacle!", Toast.LENGTH_SHORT).show();
+				NavUtils.navigateUpTo(this, new Intent(this , AmazeActivity.class));
+			}
+
+			if (maze.getBasicRobot().hasStopped()) {
+				Log.v(getClass().getName(), "<need error message for robot died/ran out of energy/obstacle>");
+				NavUtils.navigateUpTo(this, new Intent(this , AmazeActivity.class));
+			}
+
+			// TODO: need to add turnLeft() method to robotDriver.
+			// maze.getRobotDriver().turnLeft();
+			break;
+
+		case R.id.moveUp:
+
+			Log.v(getClass().getName(), "Moving robot UP");
+
+			try {
+				if (maze.getRobotDriver().drive2Exit()) {
+					startActivity(new Intent(this, FinishActivity.class));
+					break;
+				}
+			}
+			catch (Exception e) {
+				Log.v(getClass().getName(), "<need error message for robot died/ran out of energy/obstacle>");
+				Toast.makeText(this, "Robot hit an obstacle!", Toast.LENGTH_SHORT).show();
+				NavUtils.navigateUpTo(this, new Intent(this , AmazeActivity.class));
+			}
+
+			//try {
+			//	if (maze.getBasicRobot().hasStopped()) {
+			//		Log.v(getClass().getName(), "<need error message for robot died/ran out of energy/obstacle>");
+			//		NavUtils.navigateUpTo(this, new Intent(this , AmazeActivity.class));
+			//	}
+
+				// TODO: need to add stepForward() (call it goForward()??) method to robotDriver.
+				// maze.getRobotDriver().stepForward();
+			//}
+			//catch (HitObstacleException hoe) {
+			//	Log.v(getClass().getName(), "Robot has hit an obstacle.");
+			//	Toast.makeText(this, "Robot hit an obstacle!", Toast.LENGTH_SHORT).show();
+			//	NavUtils.navigateUpTo(this, new Intent(this , AmazeActivity.class));
+			//}
+
+			break;
+
+		case R.id.moveRight:
+
+			Log.v(getClass().getName(), "Moving robot RIGHT");
+
+			try {
+				if (maze.getRobotDriver().drive2Exit()) {
+					startActivity(new Intent(this, FinishActivity.class));
+					break;
+				}
+			}
+			catch (Exception e) {
+				Log.v(getClass().getName(), "<need error message for robot died/ran out of energy/obstacle>");
+				Toast.makeText(this, "Robot hit an obstacle!", Toast.LENGTH_SHORT).show();
+				NavUtils.navigateUpTo(this, new Intent(this , AmazeActivity.class));
+			}
+
+			if (maze.getBasicRobot().hasStopped()) {
+				Log.v(getClass().getName(), "<need error message for robot died/ran out of energy/obstacle>");
+				NavUtils.navigateUpTo(this, new Intent(this , AmazeActivity.class));
+			}
+
+			// TODO: need to add turnRight() method to robotDriver.
+			// maze.getRobotDriver().turnRight();
+			break;
+
+		case R.id.moveDown:
+
+			Log.v(getClass().getName(), "Moving robot DOWN");
+
+			try {
+				if (maze.getRobotDriver().drive2Exit()) {
+					startActivity(new Intent(this, FinishActivity.class));
+					break;
+				}
+			}
+			catch (Exception e) {
+				Log.v(getClass().getName(), "<need error message for robot died/ran out of energy/obstacle>");
+				Toast.makeText(this, "Robot hit an obstacle!", Toast.LENGTH_SHORT).show();
+				NavUtils.navigateUpTo(this, new Intent(this , AmazeActivity.class));
+			}
+
+			if (maze.getBasicRobot().hasStopped()) {
+				Log.v(getClass().getName(), "<need error message for robot died/ran out of energy/obstacle>");
+				NavUtils.navigateUpTo(this, new Intent(this , AmazeActivity.class));
+			}
+
+			// try {
+			//	// TODO: need to add stepBackward() (call it goBackward()??) method to robotDriver.
+			//	maze.getRobotDriver().stepBackward();
+			//}
+			//catch (HitObstacleException hoe) {
+			//	Log.v(getClass().getName(), "Robot has hit an obstacle.");
+			//	NavUtils.navigateUpTo(this, new Intent(this , AmazeActivity.class));
+			//}
+
+			break;
+		}
+	}
+
+	class RobotTask extends AsyncTask<Integer , Void , Void> {
+		@Override
+		protected Void doInBackground(Integer... params) {
+			try {
+				if (robotDriver.drive2Exit()) {
+					Intent intent = new Intent(PlayActivity.this, FinishActivity.class);
+
+					startActivity(intent);
+				}
+			}
+			catch (Exception e) {
+				Toast.makeText(PlayActivity.this, "Out of energy or hit obstacle", Toast.LENGTH_SHORT).show();
+
+				Intent intent = new Intent(PlayActivity.this, AmazeActivity.class);
+
+				NavUtils.navigateUpTo(PlayActivity.this, intent);
+			}
+
+			return null;
+		}
+
+		protected void onProgressUpdate(Integer... progress) {
+			energyProgress.incrementProgressBy(-progress[0]);
+			// energyProgress.setProgress(energyProgress.getProgress() - progress[0]);
+		}
+	}
+}

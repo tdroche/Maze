@@ -1,0 +1,98 @@
+package edu.wm.cs.cs301.thomasroche.ui;
+
+import java.io.FileOutputStream;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
+import edu.wm.cs.cs301.thomasroche.R;
+import edu.wm.cs.cs301.thomasroche.falstad.Constants;
+import edu.wm.cs.cs301.thomasroche.falstad.Maze;
+import edu.wm.cs.cs301.thomasroche.falstad.MazeFileWriter;
+import edu.wm.cs.cs301.thomasroche.falstad.StateHolder;
+
+/**
+ * Class that deals with the finish state within the maze application.
+ * Created by troche on 11/10/2015.
+ */
+
+public class FinishActivity extends Activity {
+	private String message;
+	private Maze maze;
+	private int skillLevel;
+	private TextView instructions;
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_finish);
+
+		message = getIntent().getStringExtra("message");
+		maze = (Maze) getIntent().getExtras().get("maze");
+		skillLevel = getIntent().getIntExtra("skillLevel", 0);
+		instructions = (TextView) findViewById(R.id.instructions);
+		instructions.setText(message + " " + R.string.finish_instructions);
+		instructions = (TextView) findViewById(R.id.energyConsumed);
+		instructions.setText("Energy consumed: " + StateHolder.energyConsumed);
+		instructions = (TextView) findViewById(R.id.pathLength);
+		instructions.setText("Path length: " + StateHolder.stepsTaken);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+
+		getMenuInflater().inflate(R.menu.finish, menu);
+		getActionBar().setHomeButtonEnabled(true);
+		getActionBar().setDisplayHomeAsUpEnabled(true);
+		return true;
+	}
+
+	public void onStoreMazeButtonClicked(View view) {
+		if (view.getId() == R.id.storeMaze) {
+			Log.v(getClass().getName(), "Store maze button clicked");
+			Toast.makeText(view.getContext(), "Store maze radio button clicked.", Toast.LENGTH_SHORT).show();
+
+			FileOutputStream outputStream;
+
+			try {
+				outputStream = openFileOutput("maze" + skillLevel + ".xml", Context.MODE_PRIVATE);
+				// outputStream = openFileOutput("maze1.xml", Context.MODE_PRIVATE);
+				MazeFileWriter.store("maze" + skillLevel + ".xml", maze.getMazew(), maze.getMazeh(), Constants.SKILL_ROOMS[skillLevel],
+									Constants.SKILL_PARTCT[skillLevel], maze.getRoot(), maze.getMazecells(),
+									maze.getMazedists().getDists(), maze.getStartX(), maze.getStartY());
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (item.getItemId()== android.R.id.home) {
+			Log.v(getClass().getName(), "Home button clicked - starting over");
+			startActivity(new Intent(this, AmazeActivity.class));
+			return true;
+		}
+		else
+			return super.onOptionsItemSelected(item);
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if ((keyCode == KeyEvent.KEYCODE_BACK)) {
+			Log.v(getClass().getName(), "Back button pressed");
+			startActivity(new Intent(this, AmazeActivity.class));
+		}
+
+		return super.onKeyDown(keyCode, event);
+	}
+}

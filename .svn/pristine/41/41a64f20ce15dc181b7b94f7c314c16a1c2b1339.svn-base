@@ -1,0 +1,131 @@
+package edu.wm.cs.cs301.thomasroche.falstad;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
+import android.util.AttributeSet;
+import android.view.View;
+
+/**
+ * Graphics wrapper class that extends MazePanel.
+ * @author troche
+ */
+public class GraphicsWrapper extends View {
+	/**
+	 * Panel operates a double buffer see http://www.codeproject.com/Articles/2136/Double-buffer-in-standard-Java-AWT for details.
+	 */
+	private Maze maze;
+	private Canvas canvas;
+	private Bitmap bitmap;
+	private Paint paint;
+	private Rect source;
+	private Rect destination;
+
+	/**
+	 * @param maze
+	 */
+	public GraphicsWrapper(Context context, AttributeSet set) {
+		super(context, set);
+	}
+
+	public void setGraphicsColor(Seg seg) {
+		paint.setColor(Color.rgb(seg.getCol()[0], seg.getCol()[1], seg.getCol()[2]));
+	}
+
+	public void setWhite() {
+		paint.setColor(Color.WHITE);
+	}
+
+	public void setGray() {
+		paint.setColor(Color.GRAY);
+	}
+
+	public void setYellow() {
+		paint.setColor(Color.YELLOW);
+	}
+
+	// public void setOrange() {
+	public void setGreen() {
+		paint.setColor(Color.GREEN);
+	}
+
+	public void setRed() {
+		paint.setColor(Color.RED);
+	}
+
+	public void setBlack() {
+		paint.setColor(Color.BLACK);
+	}
+
+	public void setBlue() {
+		paint.setColor(Color.BLUE);
+	}
+
+	public void setDarkGray() {
+		paint.setColor(Color.DKGRAY);
+	}
+
+	public void drawLine(int x1, int y1, int x2, int y2) {
+		canvas.drawLine(x1, y1, x2, y2, paint);
+	}
+
+	public void fillOval(int x, int y, int width, int height) {
+		// TR: paint.setStyle(Paint.Style.FILL);
+		canvas.drawOval(new RectF(x - width, y - height, x + width, y + height), paint);
+	}
+
+	public void fillRect(int x, int y, int width, int height) {
+		// TR: paint.setStyle(Paint.Style.FILL);
+		canvas.drawRect(x, y, x + width, y + height, paint);
+	}
+
+	public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
+		// TODO: TR: canvas.fillPolygon(xPoints, yPoints, nPoints);
+	}
+
+	public void drawString(String s, int y) {
+		// TODO: TR: canvas.drawString(s, (Constants.VIEW_WIDTH - paint.getFontMetrics().stringWidth(s)) / 2, y);
+    }
+
+	public void setFontSize(int size) {
+		// TODO: TR: canvas.setFont(new Font("TimesRoman", Font.BOLD, size));
+    }
+
+	/**
+	 * Method to return the RGB configuration for replacing Color import in Seg.java.
+	 * @param RGB color
+	 * @return RGB configuration for that color
+	 */
+	public static int getRGB(int[] rgb) {
+		return Color.rgb(rgb[0], rgb[1], rgb[2]);
+	}
+
+	/**
+	 * Method to help return the RGB configuration for replacing Color import in Seg.java and
+	 * other classes.
+	 * @param RGB color
+	 * @return RGB color array needed
+	 */
+	public static int[] returnColorArray(int color) {
+		int[] colorArray = new int[3];
+		
+		colorArray[0] = Color.red(color);
+		colorArray[1] = Color.green(color);
+		colorArray[2] = Color.blue(color);
+		return colorArray;
+	}
+	
+	@Override
+	public void onDraw(Canvas canvas) {
+		canvas.drawBitmap(bitmap, source, destination, paint);
+	}
+	
+	@Override
+	public void onMeasure(int measuredWidth, int measuredHeight) {
+		this.setMeasuredDimension(measuredWidth, measuredHeight);
+	}
+}

@@ -1,0 +1,545 @@
+package edu.wm.cs.cs301.thomasroche.falstad;
+
+/**
+ * This class implements the Robot interface in Robot.java and the Robot API. It works on the maze and the maze
+ * graphics, using sensors to recognize and sense distant objects, while also having the ability to turn and
+ * move forward and backwards.
+ * 
+ * @author troche
+ */
+public class BasicRobot implements Robot {
+	private Maze maze;
+	public static final float INITIAL_BATTERY_LEVEL = 2500;
+	private final int DISTANCE_SENSE_COST = 1;
+	private final int ROTATE_COST = 3;
+	private final int MOVE_COST = 5;
+	private float batteryLevel;
+	private int pathLength = 0;
+	private boolean roomSensor = true;
+	private int[] currentPosition = new int[2];
+	private int[] currentDirection = new int[2];
+	
+	private boolean[] distanceSensor = new boolean[4];
+	private static final int LEFT = 0;
+	private static final int RIGHT = 1;
+	private static final int FORWARD = 2;
+	private static final int BACKWARD = 3;
+
+	boolean stopped = false;
+
+	public BasicRobot(Maze maze) {
+		this(maze, true, true, true, true);
+	}
+	
+	public BasicRobot(Maze maze, boolean leftSensor, boolean rightSensor, boolean forwardSensor, boolean backSensor) {
+		batteryLevel = INITIAL_BATTERY_LEVEL;
+		this.maze = maze;
+		
+		currentDirection[0] = maze.getDx();
+		currentDirection[1] = maze.getDy();
+		currentPosition[0] = maze.getPx();
+		currentPosition[1] = maze.getPy();
+		
+		distanceSensor[LEFT] = leftSensor;
+		distanceSensor[RIGHT] = rightSensor;
+		distanceSensor[FORWARD] = forwardSensor;
+		distanceSensor[BACKWARD] = backSensor;
+	}
+
+	@Override
+	/**
+	 * Turn robot on the spot. If robot runs out of energy, it stops and throws an Exception, 
+	 * which can be checked by hasStopped() == true and by checking the battery level.
+	 * @param direction to turn to relative to current forward direction 
+	 * @throws Exception if the robot stops for lack of energy.
+	 */
+	public void rotate(Turn turn) throws RobotOutOfEnergyException {
+		if (batteryLevel < ROTATE_COST) {
+			stopped = true;
+			throw new RobotOutOfEnergyException();
+		}
+
+		switch(turn) {
+		case LEFT:
+			maze.rotate(1);
+			break;
+		case RIGHT:
+			maze.rotate(-1);
+			break;
+		case AROUND:
+			maze.rotate(1);
+			maze.rotate(1);
+			break;
+		}
+		
+		getCurrentDirection();
+		
+		batteryLevel -= ROTATE_COST;
+	}
+
+	@Override
+	/**
+	 * Moves robot forward a given number of steps. A step matches a single cell.
+	 * If the robot runs out of energy somewhere on its way, it stops, 
+	 * which can be checked by hasStopped() == true and by checking the battery level. 
+	 * If the robot hits an obstacle like a wall, it remains at the position in front 
+	 * of the obstacle but hasStopped() == false.
+	 * @param distance is the number of cells to move in the robot's current forward direction
+	 * @throws HitObstacleException if robot hits an obstacle like a wall or border, or runs out of energy
+	 * @precondition distance >= 0
+	 */
+	public void move(int distance) throws HitObstacleException {
+		while (distance > 0) {
+			if ((batteryLevel < MOVE_COST) || (distanceToObstacle(Robot.Direction.FORWARD) == 0)) {
+				if (batteryLevel < MOVE_COST)
+					stopped = true;
+
+				throw new HitObstacleException();
+			}
+		
+			currentPosition[0] = maze.getPx();
+			currentPosition[1] = maze.getPy();
+			// Set current cell as visited
+			getMaze().getMazecells().setCellAsVisited(maze.getPx(), maze.getPy());
+			maze.walk(1);
+			pathLength++;
+			batteryLevel -= MOVE_COST;
+			distance--;
+		}
+	}
+
+	@Override
+	/**
+	 * Provides the current position as (x,y) coordinates for the maze cell as an array of length 2 with [x,y].
+	 * @postcondition 0 <= x < width, 0 <= y < height of the maze. 
+	 * @return array of length 2, x = array[0], y=array[1]
+	 * @throws OutOfMazeException if position is outside of the maze
+	 */
+	public int[] getCurrentPosition() throws OutOfMazeException {
+		if ((maze.getPx() > maze.getMazew()) || (maze.getPy() > maze.getMazeh()))
+			throw new OutOfMazeException();
+		
+		currentPosition[0] = maze.getPx();
+		currentPosition[1] = maze.getPy();
+		return currentPosition;
+	}
+
+	@Override
+	/**
+	 * Provides the robot with a reference to the maze it is currently in.
+	 * @return maze
+	 */
+	public Maze getMaze() {
+		return maze;
+	}
+
+	@Override
+	/**
+	 * Provides the robot with a reference to the maze it is currently in.
+	 * @param maze is the current maze
+	 * @precondition maze != null, maze refers to a fully operational, configured maze object
+	 */
+	public void setMaze(Maze maze) {
+		this.maze = maze;
+	}
+
+	@Override
+	/**
+	 * Tells if current position is at the goal (the exit). Used to recognize termination of a search.
+	 * @return true if robot is at the goal, false otherwise
+	 */
+	public boolean isAtGoal() {
+		try {
+			currentPosition = getCurrentPosition();
+		}
+		catch (Exception e) {
+			return false;
+		}
+		return (maze.getMazedists().isExitPosition(currentPosition[0], currentPosition[1]));
+	}
+
+	@Override
+	/**
+	 * Tells if a sensor can identify the goal in given direction relative to 
+	 * the robot's current forward direction from the current position.
+	 * @return true if the goal is visible in a straight line of sight
+	 * @throws UnsupportedOperationException if robot has no sensor in this direction
+	 */
+	public boolean canSeeGoal(Direction direction) throws UnsupportedOperationException {
+		if (batteryLevel < DISTANCE_SENSE_COST) {
+			stopped = true;
+			return false;
+		}
+
+		batteryLevel -= DISTANCE_SENSE_COST;
+
+		int	i = LEFT;
+
+		if (direction == Direction.RIGHT)
+			i = RIGHT;
+		else if (direction == Direction.FORWARD)
+			i = FORWARD;
+		else if (direction == Direction.BACKWARD)
+			i = BACKWARD;
+
+		if (!distanceSensor[i])
+			throw new UnsupportedOperationException("Robot has no sensor in direction");
+
+		int[]	pos,
+				dir = getNewDirection(getCurrentDirection(), direction);
+
+		try {
+			pos = getCurrentPosition();
+		}
+		catch (Exception e) {
+			throw new UnsupportedOperationException("Unable to get current position");
+		}
+
+		// while there is not a wall there and we are not at the exit
+
+		boolean	hasWall = checkHasWall(dir, pos),
+				isExit = this.maze.getMazecells().isExitPosition(pos[0], pos[1]);
+
+	    while (!hasWall && !isExit) {
+	        pos[0] += dir[0];
+	        pos[1] += dir[1];
+
+	        if ((pos[0] < 0) || (pos[1] < 0) || (pos[0] >= maze.getMazew()) || (pos[1] >= maze.getMazeh()))
+	            break;
+
+	        hasWall = checkHasWall(dir, pos);
+			isExit = this.maze.getMazecells().isExitPosition(pos[0], pos[1]);
+	    }
+
+	    return isExit;
+	}
+	/**
+	public boolean canSeeGoal(Direction direction) throws UnsupportedOperationException {
+		if (batteryLevel < DISTANCE_SENSE_COST) {
+			stopped = true;
+			return false;
+		}
+
+		batteryLevel -= DISTANCE_SENSE_COST;
+
+		int	i = LEFT;
+
+		if (direction == Direction.RIGHT)
+			i = RIGHT;
+		else if (direction == Direction.FORWARD)
+			i = FORWARD;
+		else if (direction == Direction.BACKWARD)
+			i = BACKWARD;
+
+		if (!distanceSensor[i])
+			throw new UnsupportedOperationException("Robot has no sensor in direction");
+
+		int		mask = getMask(getCurrentDirection());
+		int[]	pos,
+				dir = getNewDirection(getCurrentDirection(), direction);
+
+		try {
+			pos = getCurrentPosition();
+		}
+		catch (Exception e) {
+			throw new UnsupportedOperationException("Unable to get current position");
+		}
+
+		while (true) {
+			if ((pos[0] < 0) || (pos[1] < 0) || (pos[0] >= maze.mazew) || (pos[1] >= maze.mazeh))
+				// out of maze bounds
+
+				return true;
+
+			else if (!maze.mazecells.hasMaskedBitsTrue(pos[0], pos[1], mask)) {
+				pos[0] += dir[0];
+				pos[1] += dir[1];
+			}
+			else
+				return false;
+		}
+	}
+	 */
+	@Override
+	/**
+	 * Tells if current position is inside a room. 
+	 * @return true if robot is inside a room, false otherwise
+	 * @throws UnsupportedOperationException if not supported by robot
+	 */
+	public boolean isInsideRoom() throws UnsupportedOperationException {
+		try {
+			currentPosition = getCurrentPosition();
+		}
+		catch (Exception e) {
+			throw new UnsupportedOperationException("Not supported by robot");
+		}
+		
+		return maze.getMazecells().isInRoom(currentPosition[0], currentPosition[1]);
+	}
+
+	@Override
+	/**
+	 * Tells if the robot has a room sensor.
+	 * @return true if the robot has a room sensor, false otherwise
+	 */
+	public boolean hasRoomSensor() {
+		return roomSensor;
+	}
+
+	@Override
+	/**
+	 * Provides the current direction as (dx,dy) values for the robot as an array of length 2 with [dx,dy].
+	 * @return array of length 2, dx = array[0], dy=array[1]
+	 */
+	public int[] getCurrentDirection() {
+		currentDirection[0] = maze.getDx();
+		currentDirection[1] = maze.getDy();
+		return currentDirection;
+	}
+
+	@Override
+	/**
+	 * Returns the current battery level.
+	 * If battery level <= 0 then robot stops to function and hasStopped() is true.
+	 * @return current battery level, level is > 0 if operational
+	 */
+	public float getBatteryLevel() {
+		return batteryLevel;
+	}
+
+	@Override
+	/**
+	 * Sets the battery level of the robot.
+	 * If battery level <= 0 then robot stops to function and hasStopped() is true.
+	 * @param the current battery level
+	 * @precondition level >= 0
+	 */
+	public void setBatteryLevel(float batteryLevel) {
+		this.batteryLevel = batteryLevel;
+	}
+
+	@Override
+	/**
+	 * Gives the energy consumption for a full 360 degree rotation.
+	 * @return energy for a full rotation
+	 */
+	public float getEnergyForFullRotation() {
+		return (ROTATE_COST * 4);
+	}
+
+	@Override
+	/**
+	 * Gives the energy consumption for moving forward for a distance of 1 step.
+	 * @return energy for a single step forward
+	 */
+	public float getEnergyForStepForward() {
+		return MOVE_COST;
+	}
+
+	@Override
+	/**
+	 * Tells if the robot has stopped for reasons like lack of energy, hitting an obstacle, etc.
+	 * @return true if the robot has stopped, false otherwise
+	 */
+	public boolean hasStopped() {
+		return stopped;
+	}
+
+	@Override
+	/**
+	 * Tells the distance to an obstacle (a wall or border) 
+	 * in a given direction and relative to the robot's current forward direction.
+	 * Distance is measured in the number of cells towards that obstacle.
+	 * @return number of steps towards obstacle if obstacle is visible in a straight line
+	 * @throws UnsupportedOperationException if not supported by robot
+	 */
+	public int distanceToObstacle(Direction direction) throws UnsupportedOperationException {
+		if (batteryLevel < DISTANCE_SENSE_COST) {
+	        stopped = true;
+	        return 0;
+	    }
+
+	    batteryLevel -= DISTANCE_SENSE_COST;
+	    
+		int	i = LEFT;
+
+		if (direction == Direction.RIGHT)
+			i = RIGHT;
+		else if (direction == Direction.FORWARD)
+			i = FORWARD;
+		else if (direction == Direction.BACKWARD)
+			i = BACKWARD;
+
+		if (!distanceSensor[i])
+	        throw new UnsupportedOperationException("Not supported by robot");
+
+	    int	distance = 0;
+	    int[] pos,
+	          dir = getNewDirection(getCurrentDirection(), direction);
+
+		try {
+			pos = getCurrentPosition();
+		}
+		catch (Exception e) {
+			throw new UnsupportedOperationException("Unable to get current position");
+		}
+
+	    // while there is not a wall there
+		
+		// TODO: this while loop returns 0 every time when sensing to the left
+
+		boolean	hasWall = checkHasWall(dir, pos);
+
+	    while (!hasWall) {
+	        pos[0] += dir[0];
+	        pos[1] += dir[1];
+
+	        if ((pos[0] < 0) || (pos[1] < 0) || (pos[0] >= maze.getMazew()) || (pos[1] >= maze.getMazeh()))
+	            break;
+
+	        distance++;
+	        hasWall = checkHasWall(dir, pos);
+	    }
+
+	    return distance;
+	}
+
+	public boolean checkHasWall(int[] dir, int[] pos) {
+		boolean	hasWall = false;
+
+		if ((dir[0] == 1) && (dir[1] == 0))
+			hasWall = maze.getMazecells().hasWallOnRight(pos[0], pos[1]);
+		else if ((dir[0] == 0) && (dir[1] == 1))
+			hasWall = maze.getMazecells().hasWallOnBottom(pos[0], pos[1]);
+		else if ((dir[0] == -1) && (dir[1] == 0))
+			hasWall = maze.getMazecells().hasWallOnLeft(pos[0], pos[1]);
+		else if ((dir[0] == 0) && (dir[1] == -1))
+			hasWall = maze.getMazecells().hasWallOnTop(pos[0], pos[1]);
+
+        return hasWall;
+	}
+
+	@Override
+	/**
+	 * Tells if the robot has a distance sensor for the given direction.
+	 * @param direction of sensor
+	 * @return true if robot has distance sensor
+	 */
+	public boolean hasDistanceSensor(Direction direction) {
+		int	i = LEFT;
+
+		if (direction == Direction.RIGHT)
+			i = RIGHT;
+		else if (direction == Direction.FORWARD)
+			i = FORWARD;
+		else if (direction == Direction.BACKWARD)
+			i = BACKWARD;
+
+		return (distanceSensor[i]);
+	}
+	
+	public int[] getNewDirection(int[] currentDirection, Direction direction) {
+		int[] newDirection = new int[2];
+		
+		if (direction == Direction.LEFT) {
+			if ((currentDirection[0] == 1) && (currentDirection[1] == 0)) {
+				newDirection[0] = 0;
+				newDirection[1] = 1;
+			}
+			else if ((currentDirection[0] == 0) && (currentDirection[1] == 1)) {
+				newDirection[0] = -1;
+				newDirection[1] = 0;
+			}
+			else if ((currentDirection[0] == -1) && (currentDirection[1] == 0)) {
+				newDirection[0] = 0;
+				newDirection[1] = -1;
+			}
+			else if ((currentDirection[0] == 0) && (currentDirection[1] == -1)) {
+				newDirection[0] = 1;
+				newDirection[1] = 0;
+			}
+		}
+		else if (direction == Direction.RIGHT) {
+			if ((currentDirection[0] == 1) && (currentDirection[1] == 0)) {
+				newDirection[0] = 0;
+				newDirection[1] = -1;
+			}
+			else if ((currentDirection[0] == 0) && (currentDirection[1] == 1)) {
+				newDirection[0] = 1;
+				newDirection[1] = 0;
+			}
+			else if ((currentDirection[0] == -1) && (currentDirection[1] == 0)) {
+				newDirection[0] = 0;
+				newDirection[1] = 1;
+			}
+			else if ((currentDirection[0] == 0) && (currentDirection[1] == -1)) {
+				newDirection[0] = -1;
+				newDirection[1] = 0;
+			}
+		}
+		else if (direction == Direction.FORWARD) {
+			newDirection[0] = currentDirection[0];
+			newDirection[1] = currentDirection[1];
+		}
+		else if (direction == Direction.BACKWARD) {
+			if ((currentDirection[0] == 1) && (currentDirection[1] == 0)) {
+				newDirection[0] = -1;
+				newDirection[1] = 0;
+			}
+			else if ((currentDirection[0] == 0) && (currentDirection[1] == 1)) {
+				newDirection[0] = 0;
+				newDirection[1] = -1;
+			}
+			else if ((currentDirection[0] == -1) && (currentDirection[1] == 0)) {
+				newDirection[0] = 1;
+				newDirection[1] = 0;
+			}
+			else if ((currentDirection[0] == 0) && (currentDirection[1] == -1)) {
+				newDirection[0] = 0;
+				newDirection[1] = 1;
+			}
+		}
+		
+		return newDirection;
+	}
+	
+	public int getMask (int[] currentDirection) {
+		int mask = 0;
+
+		if ((currentDirection[0] == 1) && (currentDirection[1] == 0))
+			mask = Constants.CW_RIGHT;
+		else if ((currentDirection[0] == 0) && (currentDirection[1] == 1))
+			mask = Constants.CW_BOT;
+		else if ((currentDirection[0] == -1) && (currentDirection[1] == 0))
+			mask = Constants.CW_LEFT;
+		else if ((currentDirection[0] == 0) && (currentDirection[1] == -1))
+			mask = Constants.CW_TOP;
+
+		return mask;
+	}
+	
+	private boolean checkGoal(int[] currentPosition, int[] currentDirection, Direction direction) {
+		int[] pos = currentPosition;
+		int[] dir = getNewDirection(currentDirection, direction);
+		
+		//TODO: still need to check for a goal in the "dir"
+
+		while (true) {
+			if (isAtGoal())
+				return true;
+
+			if (direction == Direction.BACKWARD) {
+				pos[0] -= currentDirection[0];
+				pos[1] -= currentDirection[1];
+			}
+			else {
+				pos[0] += currentDirection[0];
+				pos[1] += currentDirection[1];
+			}
+		}
+	}
+
+	public int getPathLength() {
+		return pathLength;
+	}
+}

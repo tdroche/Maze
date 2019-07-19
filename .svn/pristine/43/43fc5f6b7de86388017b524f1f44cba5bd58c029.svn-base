@@ -1,0 +1,52 @@
+package edu.wm.cs.cs301.thomasroche.ui;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.NavUtils;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Toast;
+import edu.wm.cs.cs301.thomasroche.R;
+
+/**
+ * Class that deals with the finish state within the maze application.
+ * Created by troche on 11/10/2015.
+ */
+
+public class FinishActivity extends Activity {
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_finish);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+
+		getMenuInflater().inflate(R.menu.finish, menu);
+		getActionBar().setHomeButtonEnabled(true);
+		getActionBar().setDisplayHomeAsUpEnabled(true);
+		return true;
+	}
+
+	public void onStoreMazeButtonClicked(View view) {
+		if (view.getId() == R.id.storeMaze) {
+			Log.v("RadioButton" , "Store maze button clicked");
+			Toast.makeText(view.getContext(), "Store maze radio button clicked.", Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (item.getItemId()== android.R.id.home) {
+			Log.v("Generating Activity", "Home button clicked - starting over");
+			NavUtils.navigateUpTo(this, new Intent(this, AmazeActivity.class));
+			return true;
+		}
+		else
+			return super.onOptionsItemSelected(item);
+	}
+}

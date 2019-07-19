@@ -1,0 +1,89 @@
+package edu.wm.cs.cs301.thomasroche.ui;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.SeekBar;
+import android.widget.Spinner;
+import android.widget.Toast;
+import edu.wm.cs.cs301.thomasroche.R;
+
+/**
+ * Class that deals with the title state of the maze application.
+ * Created by troche on 11/10/2015.
+ */
+
+public class AmazeActivity extends Activity {
+	private Spinner algorithm;
+	private SeekBar skillLevel;
+	Boolean generateMaze = true;
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_amaze);
+
+		// Create algorithm spinner values.
+
+		algorithm = (Spinner) findViewById(R.id.algorithm);
+		algorithm.setOnItemSelectedListener(new AlgorithmActivity());
+
+		ArrayAdapter<CharSequence>	adapter = ArrayAdapter.createFromResource(this, R.array.algorithms, android.R.layout.simple_spinner_item);
+
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		algorithm.setAdapter(adapter);
+
+		// Get reference to skillLevel widget.
+
+		skillLevel = (SeekBar) findViewById(R.id.skillLevel);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+
+		getMenuInflater().inflate(R.menu.amaze, menu);
+		return true;
+	}
+
+	public void onRadioButtonClicked(View view) {
+		// Which button was clicked?
+
+		if (view.getId() == R.id.generateMaze) {
+			Log.v(getClass().getName(), "Generate maze radio button checked");
+			Toast.makeText(view.getContext(), "Random maze will be generated.", Toast.LENGTH_SHORT).show();
+		}
+		else if (view.getId() == R.id.loadMaze) {
+			Log.v(getClass().getName(), "Load maze radio button checked");
+			Toast.makeText(view.getContext(), "Maze will be loaded from a file.", Toast.LENGTH_SHORT).show();
+			generateMaze = false;
+		}
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+
+		if (item.getItemId() == R.id.action_start) {
+			Log.v(getClass().getName(), "Generating a maze");
+
+			Intent intent = new Intent(this, GeneratingActivity.class);
+
+			intent.putExtra("algorithm", algorithm.getSelectedItem().toString());
+			intent.putExtra("generateMaze", generateMaze.toString());
+			intent.putExtra("skillLevel", skillLevel.getProgress());
+
+			startActivity(intent);
+			return true;
+		}
+		else
+			return super.onOptionsItemSelected(item);
+	}
+}

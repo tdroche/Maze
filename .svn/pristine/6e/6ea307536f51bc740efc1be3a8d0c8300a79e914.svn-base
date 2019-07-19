@@ -1,0 +1,265 @@
+package edu.wm.cs.cs301.thomasroche.ui;
+
+import java.io.InputStream;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.v4.app.NavUtils;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.ProgressBar;
+import android.widget.Spinner;
+import edu.wm.cs.cs301.thomasroche.R;
+import edu.wm.cs.cs301.thomasroche.falstad.Constants;
+import edu.wm.cs.cs301.thomasroche.falstad.Distance;
+import edu.wm.cs.cs301.thomasroche.falstad.Maze;
+import edu.wm.cs.cs301.thomasroche.falstad.MazeBuilder;
+import edu.wm.cs.cs301.thomasroche.falstad.MazeBuilderEller;
+import edu.wm.cs.cs301.thomasroche.falstad.MazeBuilderPrim;
+import edu.wm.cs.cs301.thomasroche.falstad.MazeFileReader;
+import edu.wm.cs.cs301.thomasroche.falstad.StateHolder;
+
+/**
+ * Class that deals with the generating state within the maze application.
+ * Created by troche on 11/10/2015.
+ */
+
+public class GeneratingActivity extends Activity {
+	String algorithm;
+	String generateMaze;
+	int skillLevel;
+	ProgressBar loadProgress;
+	int loadProgressStatus = 0;
+	private Handler handler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			loadProgress.incrementProgressBy(5);
+		}};
+	private boolean isRunning = false;
+	private Spinner driverSelection;
+	private CheckBox showTop;
+	private CheckBox showWalls;
+	private CheckBox showExit;
+	Maze maze;
+	MazeFileReader mazeFileReader;
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_generating);
+
+		// Create driver selection spinner values.
+
+		driverSelection = (Spinner) findViewById(R.id.driverSelection);
+		driverSelection.setOnItemSelectedListener(new DriverSelectionActivity());
+
+		ArrayAdapter<CharSequence>	adapter = ArrayAdapter.createFromResource(this, R.array.driverSelection, android.R.layout.simple_spinner_item);
+
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		driverSelection.setAdapter(adapter);
+
+		// Store any passed data from previous activity.
+
+		algorithm = getIntent().getStringExtra("algorithm");
+		generateMaze = getIntent().getStringExtra("generateMaze");
+		skillLevel = getIntent().getIntExtra("skillLevel", 3);
+
+		// Get reference to widgets.
+
+		loadProgress = (ProgressBar) findViewById(R.id.loadProgress);
+		driverSelection = (Spinner) findViewById(R.id.driverSelection);
+		driverSelection.setOnItemSelectedListener(new DriverSelectionActivity());
+		showTop = (CheckBox) findViewById(R.id.showTop);
+		showWalls = (CheckBox) findViewById(R.id.walls);
+		showExit = (CheckBox) findViewById(R.id.showExit);
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+
+		getMenuInflater().inflate(R.menu.generating, menu);
+		getActionBar().setHomeButtonEnabled(true);
+		getActionBar().setDisplayHomeAsUpEnabled(true);
+		return true;
+	}
+
+	public boolean onOptionsItemSelected(MenuItem item) {
+		if (item.getItemId()== R.id.action_play) {
+			Log.v("ActionBar", "Starting the maze");
+			
+			Intent intent = new Intent(this, PlayActivity.class);
+			
+			intent.putExtra("driverSelection", driverSelection.getSelectedItem().toString());
+			intent.putExtra("showTop", showTop.toString());
+			intent.putExtra("showWalls", showWalls.toString());
+			intent.putExtra("showExit", showExit.toString());
+			
+			startActivity(intent);
+			return true;
+		}
+		else if (item.getItemId()== R.id.action_back) {
+			Log.v("ActionBar", "Return to previous state");
+			
+			Intent intent = new Intent(this, AmazeActivity.class);
+			
+			startActivity(intent);
+			return true;
+		}
+		else if (item.getItemId()== android.R.id.home) {
+			Log.v("Generating Activity", "Home button clicked - starting over");
+			NavUtils.navigateUpTo(this, new Intent(this, AmazeActivity.class));
+			return true;
+		}
+		else
+			return super.onOptionsItemSelected(item);
+	}
+
+	public void onStart() {
+		super.onStart();
+		loadProgress.setProgress(0);
+
+		Thread background = new Thread(new Runnable() {
+			public void run() {
+				try {
+					for (int i = 0; i < 20 && isRunning; i++) {
+						Thread.sleep(250);
+						handler.sendMessage(handler.obtainMessage());
+					}
+				}
+				catch (Throwable t) {
+				}
+			}
+		});
+
+		isRunning = true;
+		background.start();
+	}
+
+	public void onStop() {
+		super.onStop();
+		isRunning = false;
+	}
+
+	class GenerateMaze extends AsyncTask<Integer, Void , Void> {
+		@Override
+		protected Void doInBackground(Integer...params) {
+			// Generate the maze from a loaded file.
+
+			if (generateMaze.equals("false")) {
+				InputStream inputStream;
+				int[] mazeResources = new int[] { R.raw.maze01, R.raw.maze02, R.raw.maze03, R.raw.maze04, R.raw.maze05,
+												R.raw.maze06, R.raw.maze07, R.raw.maze08, R.raw.maze09, R.raw.maze10,
+												R.raw.maze11, R.raw.maze12, R.raw.maze13, R.raw.maze14, R.raw.maze15 };
+
+				Log.v("Generating", "Load the correct maze from the file");
+				inputStream = getResources().openRawResource(mazeResources[skillLevel - 1]);
+				Log.v("Loading file", "Skill level: " + skillLevel);
+
+				publishProgress();
+				mazeFileReader = new MazeFileReader(inputStream);
+				publishProgress();
+
+				maze = new Maze();
+				maze.setMazeh(mazeFileReader.getHeight());
+				maze.setMazew(mazeFileReader.getWidth());
+
+				Distance d = new Distance(mazeFileReader.getDistances());
+
+				maze.newMaze(mazeFileReader.getRootNode(), mazeFileReader.getCells(), d, mazeFileReader.getStartX(), mazeFileReader.getStartY());
+				publishProgress();
+			}
+			else {
+				// Generate the random maze.
+
+				if (StateHolder.mazeSkill[skillLevel - 1] != null)
+					maze = StateHolder.mazeSkill[skillLevel - 1];
+				else {
+					int num = 2; // Use Eller's by default.
+
+					if (algorithm.equals("Default"))
+						num = 0;
+					else if (algorithm.equals("Prim"))
+						num = 1;
+
+					// Generate the maze using the correct builder.
+
+					publishProgress();
+					maze = new Maze(num);
+					publishProgress();
+
+					// Select maze generation algorithm.
+
+					if (maze.getMethod() == 2)
+						maze.mazebuilder = new MazeBuilderEller();
+					else if (maze.getMethod() == 1)
+						maze.mazebuilder = new MazeBuilderPrim();
+					else
+						maze.mazebuilder = new MazeBuilder(); 
+
+					// Adjust settings and launch generation in a separate thread.
+
+					maze.setMazew(Constants.SKILL_X[skillLevel]);
+					maze.setMazeh(Constants.SKILL_Y[skillLevel]);
+					maze.mazebuilder.build(maze, maze.getMazew(), maze.getMazeh(), Constants.SKILL_ROOMS[skillLevel], Constants.SKILL_PARTCT[skillLevel]);
+					publishProgress();
+
+					StateHolder.mazeSkill[skillLevel - 1] = maze;
+					publishProgress();
+				}
+			}
+			try {
+				maze.mazebuilder.buildThread.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return (null);
+		}
+
+		@Override
+		protected void onProgressUpdate(Void... unused) {
+			loadProgress.incrementProgressBy(33);				
+		}
+/*
+		@Override
+		protected void onPostExecute(Void unused) {
+			TextView temp = (TextView) findViewById(R.id.loading_text);
+			temp.setVisibility(View.INVISIBLE);
+			btn = new Button(GeneratingActivity.this);
+			btn.setHeight(50);
+			btn.setWidth(70);
+			LinearLayout layout = (LinearLayout) findViewById(R.id.generating_screen);
+			btn.setText("Go to Maze");
+
+			layout.addView(btn);
+			btn.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					Log.v("Generating Activity" , "Going to maze view");
+					Intent playIntent = new Intent(GeneratingActivity.this , PlayActivity.class);
+					Bundle bundle = new Bundle();
+					bundle.putSerializable("Cells", maze.mazecells);
+					bundle.putSerializable("BSPnode" , maze.bspRoot);
+					bundle.putSerializable("Distance", maze.mazedists);
+					bundle.putInt("startx", maze.px);
+					bundle.putInt("starty", maze.py);
+					bundle.putInt("mazew" , maze.mazew);
+					bundle.putInt("mazeh" , maze.mazeh);
+					bundle.putString("robotDriver", robot);
+					Log.v("hello world", maze.mazecells.toString());
+					playIntent.putExtras(bundle);
+					startActivity(playIntent);
+				}
+			});
+		}
+		*/
+	}
+}

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="edu.wm.cs.cs301.thomasroche.ui.GeneratingActivity">
+
+    <Spinner
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/driverSelection"
+        android:layout_centerHorizontal="true"
+        android:spinnerMode="dropdown" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/generating_showTop"
+        android:id="@+id/showTop"
+        android:checked="false"
+        android:layout_above="@+id/walls"
+        android:layout_centerHorizontal="true" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/generating_showWalls"
+        android:id="@+id/walls"
+        android:checked="false"
+        android:layout_above="@+id/showExit"
+        android:layout_centerHorizontal="true" />
+
+    <CheckBox
+        android:id="@+id/showExit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/loadProgress"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="65dp"
+        android:checked="false"
+        android:text="@string/generating_showExit" />
+
+    <!-- style="?android:attr/progressBarStyleLarge" -->
+
+    <TextView
+        android:id="@+id/loadingText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="56dp"
+        android:text="@string/generating_loadingText"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+</RelativeLayout>

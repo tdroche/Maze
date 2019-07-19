@@ -1,0 +1,94 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="edu.wm.cs.cs301.thomasroche.ui.PlayActivity" >
+
+    <ProgressBar
+        android:id="@+id/energyProgress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="17dp" />
+
+    <RadioGroup
+        android:id="@+id/playRadioGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true" >
+
+        <RadioButton
+            android:id="@+id/map"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/play_map" />
+
+        <RadioButton
+            android:id="@+id/solution"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/play_solution" />
+
+        <RadioButton
+            android:id="@+id/walls"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/play_walls" />
+    </RadioGroup>
+
+    <ImageButton
+        android:id="@+id/moveLeft"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/play_leftButton"
+        android:src="@drawable/ic_action_back" />
+
+    <ImageButton
+        android:id="@+id/moveUp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@+id/moveLeft"
+        android:layout_toRightOf="@+id/moveLeft"
+        android:contentDescription="@string/play_upButton"
+        android:src="@drawable/ic_action_up" />
+
+    <ImageButton
+        android:id="@+id/moveDown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@+id/moveUp"
+        android:layout_toRightOf="@+id/moveUp"
+        android:contentDescription="@string/play_downButton"
+        android:src="@drawable/ic_action_down" />
+
+    <ImageButton
+        android:id="@+id/moveRight"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toEndOf="@+id/moveDown"
+        android:layout_toRightOf="@+id/moveDown"
+        android:contentDescription="@string/play_rightButton"
+        android:src="@drawable/ic_action_forward" />
+
+    <edu.wm.cs.cs301.thomasroche.falstad.GraphicsWrapper
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/mazeDisplay"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_above="@+id/energyProgress"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="15dp"
+        android:gravity="center_horizontal" />
+
+</RelativeLayout>

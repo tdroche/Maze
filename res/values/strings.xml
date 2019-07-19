@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">AMazeByThomasRoche</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+
+    <string-array name="algorithms">
+        <item>Default</item>
+        <item>Prim</item>
+        <item>Eller</item>
+    </string-array>
+    <string-array name="driverSelection">
+        <item>Manual</item>
+        <item>Curious Mouse</item>
+        <item>Wall Follower</item>
+        <item>Wizard</item>
+    </string-array>
+
+    <string name="action_start">Start</string>
+    <string name="amaze_maze">Maze</string>
+    <string name="amaze_description">Android Maze Application</string>
+    <string name="amaze_skill_level">Please choose a skill level and algorithm:</string>
+    <string name="amaze_copyright">by Paul Falstad (www.falstad.com)</string>
+    <string name="amaze_load_maze">Load Maze From File</string>
+    <string name="amaze_zeroMarker">1</string>
+    <string name="amaze_fiveMarker">5</string>
+    <string name="amaze_tenMarker">10</string>
+    <string name="amaze_fifteenMarker">15</string>
+    <string name="amaze_start">Start</string>
+    <string name="amaze_generateMaze">Generate random maze</string>
+    <string name="amaze_loadMaze">Load a maze from file</string>
+    <string name="generating_showTop">Show maze from top</string>
+    <string name="generating_showWalls">Show visible walls</string>
+    <string name="generating_showExit">Show way to exit</string>
+    <string name="generating_play">Play</string>
+    <string name="generating_back">Back</string>
+    <string name="generating_loadingText">Loading&#8230;</string>
+    <string name="generating_playTheMaze">Play the maze</string>
+    <string name="play_energyLabel">ENERGY</string>
+    <string name="play_map">Map</string>
+    <string name="play_solution">Solution</string>
+    <string name="play_walls">Walls</string>
+    <string name="play_leftButton">Left</string>
+    <string name="play_rightButton">Right</string>
+    <string name="play_forwardButton">Forward</string>
+    <string name="play_rotateButton">Rotate</string>
+    <string name="finish_gameOver">Game Over</string>
+    <string name="finish_instructions">To play again, press the home key</string>
+    <string name="finish_energyConsumed">Energy consumed: </string>
+    <string name="finish_pathLength">Path length: </string>
+    <string name="finish_storeMaze">Store Maze</string>
+    <string name="title_activity_play">PlayActivity</string>
+</resources>
